@@ -1,12 +1,8 @@
 {
-  "name": "loud-puppeteer",
-  "version": "1.0.0",
-  "main": "index.js",
-  "scripts": {
-    "start": "node index.js"
-  },
   "dependencies": {
     "express": "^4.18.2",
-    "puppeteer": "^22.8.2"
+    "puppeteer-extra": "^3.3.4",
+    "puppeteer-extra-plugin-stealth": "^2.11.1",
+    "puppeteer-core": "^21.11.0"
   }
 }
