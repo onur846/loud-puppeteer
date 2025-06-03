@@ -1,9 +1,11 @@
+// scraper.js
+
 import puppeteer from 'puppeteer-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 
 puppeteer.use(StealthPlugin());
 
-export async function scrapeTop25Users() {
+export default async function scrapeTop25() {
   console.log('[SCRAPER] Launching browser...');
   const browser = await puppeteer.launch({
     headless: true,
@@ -24,9 +26,7 @@ export async function scrapeTop25Users() {
       return rows.map(row => {
         const username = row.querySelector('a[href*="twitter.com"]')?.textContent.trim();
         const handle = row.querySelector('span.text-sm.text-gray-500')?.textContent.trim().replace('@', '');
-
         const avatar = row.querySelector('img')?.src || '';
-
         const mindshare = row.querySelector('td:nth-child(5)')?.textContent.trim() || '';
         const change = row.querySelector('td:nth-child(6)')?.textContent.trim() || '';
         const earnings = row.querySelector('td:nth-child(7)')?.textContent.trim() || '';
