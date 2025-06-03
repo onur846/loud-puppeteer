@@ -22,28 +22,22 @@ export default async function scrapeTop25() {
     await page.waitForSelector('tr[data-slot="table-row"]', { timeout: 10000 });
 
     const users = await page.evaluate(() => {
-      const rows = Array.from(document.querySelectorAll('tr[data-slot="table-row"]'));
+  const rows = Array.from(document.querySelectorAll('tr[data-slot="table-row"]'));
 
-      return rows.map(row => {
-        const username = row.querySelector('a[href*="twitter.com"]')?.textContent.trim();
-        const handle = row.querySelector('span.text-sm.text-gray-500')?.textContent.trim().replace('@', '');
-        const avatar = row.querySelector('img')?.src || '';
+  return rows.map(row => {
+    const username = row.querySelector('a[href*="twitter.com"]')?.textContent.trim();
+    const handle = row.querySelector('span.text-sm.text-gray-500')?.textContent.trim().replace('@', '');
+    const avatar = row.querySelector('img')?.src || '';
 
-        // ✅ Correct columns based on StayLoud's table structure
-        const mindshare = row.querySelector('td:nth-child(4)')?.textContent.trim() || '';
-        const change = row.querySelector('td:nth-child(5)')?.textContent.trim() || '';
-        const earnings = row.querySelector('td:nth-child(6)')?.textContent.trim() || '';
+    const cells = row.querySelectorAll('td');
+    const earnings  = cells[3]?.textContent.trim() || ''; // 4th real column
+    const mindshare = cells[4]?.textContent.trim() || ''; // 5th real column
+    const change    = cells[5]?.textContent.trim() || ''; // 6th real column
 
-        return {
-          username,
-          handle,
-          avatar,
-          mindshare,
-          change,
-          earnings,
-        };
-      }).filter(u => u.username && u.handle);
-    });
+    return { username, handle, avatar, earnings, mindshare, change };
+  }).filter(u => u.username && u.handle);
+});
+
 
     await browser.close();
     console.log('[SCRAPER] Extracted:', users.length, 'users');
