@@ -10,7 +10,7 @@ async function scrapeTop25() {
   await page.goto('https://www.stayloud.io', { waitUntil: 'networkidle2' });
 
   // ✅ Wait for the leaderboard rows to appear
-  await page.waitForSelector('tr[data-slot="table-row"]', { timeout: 3000 });
+  await page.waitForSelector('tr[data-slot="table-row"]', { timeout: 15000 });
 
   // ✅ Scrape the top 25 rows
   const users = await page.evaluate(() => {
