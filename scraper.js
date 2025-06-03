@@ -1,5 +1,3 @@
-// scraper.js
-
 import puppeteer from 'puppeteer-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 
@@ -16,7 +14,10 @@ export default async function scrapeTop25() {
   try {
     const page = await browser.newPage();
     console.log('[SCRAPER] Navigating to StayLoud.io...');
-    await page.goto('https://www.stayloud.io', { waitUntil: 'networkidle2', timeout: 60000 });
+    await page.goto('https://www.stayloud.io', {
+      waitUntil: 'networkidle2',
+      timeout: 60000,
+    });
 
     await page.waitForSelector('tr[data-slot="table-row"]', { timeout: 10000 });
 
@@ -27,11 +28,20 @@ export default async function scrapeTop25() {
         const username = row.querySelector('a[href*="twitter.com"]')?.textContent.trim();
         const handle = row.querySelector('span.text-sm.text-gray-500')?.textContent.trim().replace('@', '');
         const avatar = row.querySelector('img')?.src || '';
-        const mindshare = row.querySelector('td:nth-child(5)')?.textContent.trim() || '';
-        const change = row.querySelector('td:nth-child(6)')?.textContent.trim() || '';
-        const earnings = row.querySelector('td:nth-child(7)')?.textContent.trim() || '';
 
-        return { username, handle, avatar, mindshare, change, earnings };
+        // ✅ Correct columns based on StayLoud's table structure
+        const mindshare = row.querySelector('td:nth-child(4)')?.textContent.trim() || '';
+        const change = row.querySelector('td:nth-child(5)')?.textContent.trim() || '';
+        const earnings = row.querySelector('td:nth-child(6)')?.textContent.trim() || '';
+
+        return {
+          username,
+          handle,
+          avatar,
+          mindshare,
+          change,
+          earnings,
+        };
       }).filter(u => u.username && u.handle);
     });
 
