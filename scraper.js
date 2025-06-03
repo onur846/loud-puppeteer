@@ -28,12 +28,9 @@ export async function scrapeTop25() {
 
         const cells = row.querySelectorAll('td');
 
-        const earningsSol = cells[3]?.querySelector('div')?.textContent.trim() || '';
-        const earningsUsd = cells[3]?.querySelectorAll('div')?.[1]?.textContent.trim() || '';
-        const earnings = `${earningsSol} ${earningsUsd}`.trim();
-
-        const mindshare = cells[4]?.querySelector('div')?.textContent.trim() || '';
-        const change = cells[5]?.querySelector('span')?.textContent.trim() || '';
+        const mindshare = cells[2]?.innerText.trim() || '';
+        const change = cells[3]?.innerText.trim() || '';
+        const earnings = cells[4]?.innerText.trim() || '';
 
         return { handle, username, avatar, mindshare, change, earnings };
       }).filter(u => u.handle && u.username);
