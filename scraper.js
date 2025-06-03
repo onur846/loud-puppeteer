@@ -1,40 +1,42 @@
-import puppeteer from 'puppeteer-core';
-import puppeteerExtra from 'puppeteer-extra';
+import puppeteer from 'puppeteer-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 
-puppeteerExtra.use(StealthPlugin());
+puppeteer.use(StealthPlugin());
 
 export async function scrapeTop25Users() {
   console.log('[SCRAPER] Launching browser...');
-
-  const browser = await puppeteerExtra.launch({
+  const browser = await puppeteer.launch({
     headless: true,
     executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    timeout: 60000
   });
 
   try {
     const page = await browser.newPage();
     console.log('[SCRAPER] Navigating to StayLoud.io...');
-    await page.goto('https://www.stayloud.io/', { waitUntil: 'networkidle2', timeout: 60000 });
+    await page.goto('https://www.stayloud.io', { waitUntil: 'networkidle2', timeout: 60000 });
 
     await page.waitForSelector('tr[data-slot="table-row"]', { timeout: 10000 });
 
     const users = await page.evaluate(() => {
       const rows = Array.from(document.querySelectorAll('tr[data-slot="table-row"]'));
-      return rows.slice(0, 25).map(row => {
-        const nameEl = row.querySelector('a[href*="twitter.com/i/user/"]');
-        const handleEl = row.querySelector('span.text-sm.text-gray-500');
-        if (!nameEl || !handleEl) return null;
-        return {
-          username: nameEl.textContent.trim(),
-          handle: handleEl.textContent.trim().replace('@', '')
-        };
-      }).filter(Boolean);
+
+      return rows.map(row => {
+        const username = row.querySelector('a[href*="twitter.com"]')?.textContent.trim();
+        const handle = row.querySelector('span.text-sm.text-gray-500')?.textContent.trim().replace('@', '');
+
+        const avatar = row.querySelector('img')?.src || '';
+
+        const mindshare = row.querySelector('td:nth-child(5)')?.textContent.trim() || '';
+        const change = row.querySelector('td:nth-child(6)')?.textContent.trim() || '';
+        const earnings = row.querySelector('td:nth-child(7)')?.textContent.trim() || '';
+
+        return { username, handle, avatar, mindshare, change, earnings };
+      }).filter(u => u.username && u.handle);
     });
 
     await browser.close();
+    console.log('[SCRAPER] Extracted:', users.length, 'users');
     return users;
   } catch (error) {
     console.error('[SCRAPER ERROR]', error);
