@@ -1,33 +1,37 @@
 const puppeteer = require('puppeteer');
 
-async function scrapeLeaderboard() {
+async function scrapeTop25() {
   const browser = await puppeteer.launch({
-    args: ['--no-sandbox', '--disable-setuid-sandbox']
+    args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
   });
-  const page = await browser.newPage();
-  await page.goto('https://www.stayloud.io/', { waitUntil: 'networkidle0' });
 
+  const page = await browser.newPage();
+  await page.goto('https://www.stayloud.io', { waitUntil: 'networkidle2' });
+
+  // ✅ Wait for the leaderboard rows to appear
+  await page.waitForSelector('tr[data-slot="table-row"]', { timeout: 3000 });
+
+  // ✅ Scrape the top 25 rows
   const users = await page.evaluate(() => {
     const rows = document.querySelectorAll('tr[data-slot="table-row"]');
-    const data = [];
-    rows.forEach((row) => {
-      const usernameEl = row.querySelector('a[href*="twitter.com/i/user/"]');
-      const handleEl = row.querySelector('span.text-sm.text-gray-500');
-      const avatarEl = row.querySelector('img');
+    const top25 = [];
 
-      if (usernameEl && handleEl && avatarEl) {
-        data.push({
-          username: usernameEl.textContent.trim(),
-          handle: handleEl.textContent.trim().replace('@', ''),
-          avatar: avatarEl.src,
-        });
+    rows.forEach(row => {
+      const username = row.querySelector('a[href*="twitter.com"]')?.textContent?.trim();
+      const handleSpan = row.querySelector('span.text-sm.text-gray-500');
+      const handle = handleSpan?.textContent?.trim().replace(/^@/, '');
+
+      if (username && handle) {
+        top25.push({ username, handle });
       }
     });
-    return data;
+
+    return top25;
   });
 
   await browser.close();
   return users;
 }
 
-module.exports = scrapeLeaderboard;
+module.exports = scrapeTop25;
