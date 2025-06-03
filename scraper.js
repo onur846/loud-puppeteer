@@ -19,7 +19,7 @@ export default async function scrapeTop25() {
       timeout: 60000,
     });
 
-    await page.waitForSelector('tr[data-slot="table-row"]', { timeout: 10000 });
+    await page.waitForSelector('tr[data-slot="table-row"]', { timeout: 90000 });
 
     const users = await page.evaluate(() => {
   const rows = Array.from(document.querySelectorAll('tr[data-slot="table-row"]'));
