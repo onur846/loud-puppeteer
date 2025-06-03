@@ -1,16 +1,9 @@
-# Use official Node.js image
-FROM node:18-slim
+# Use Node.js with slim Debian
+FROM node:20-slim
 
-# Create app directory
-WORKDIR /usr/src/app
-
-# Install dependencies
-COPY package*.json ./
-RUN npm install
-
-# Puppeteer dependencies
+# Install Chromium and dependencies
 RUN apt-get update && apt-get install -y \
-  wget \
+  chromium \
   ca-certificates \
   fonts-liberation \
   libappindicator3-1 \
@@ -27,14 +20,23 @@ RUN apt-get update && apt-get install -y \
   libxdamage1 \
   libxrandr2 \
   xdg-utils \
-  --no-install-recommends && \
-  apt-get clean && rm -rf /var/lib/apt/lists/*
+  --no-install-recommends \
+  && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Bundle app source
+# Set working directory
+WORKDIR /app
+
+# Skip Puppeteer’s Chromium download
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+
+# Install dependencies
+COPY package*.json ./
+RUN npm install
+
+# Copy source files
 COPY . .
 
-# Expose port
+# Run on port 10000
 EXPOSE 10000
-
-# Run the app
 CMD ["node", "index.js"]
