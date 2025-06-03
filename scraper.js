@@ -1,51 +1,44 @@
-const puppeteer = require('puppeteer');
+import puppeteer from 'puppeteer-core';
+import puppeteerExtra from 'puppeteer-extra';
+import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 
-async function scrapeTop25Users() {
-  let browser;
+puppeteerExtra.use(StealthPlugin());
+
+export async function scrapeTop25Users() {
+  console.log('[SCRAPER] Launching browser...');
+
+  const browser = await puppeteerExtra.launch({
+    headless: true,
+    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
+    args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    timeout: 60000
+  });
+
   try {
-    console.log('[SCRAPER] Launching browser...');
-    browser = await puppeteer.launch({
-      headless: true,
-      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    });
-
     const page = await browser.newPage();
     console.log('[SCRAPER] Navigating to StayLoud.io...');
-    await page.goto('https://www.stayloud.io', { waitUntil: 'networkidle2', timeout: 30000 });
+    await page.goto('https://www.stayloud.io/', { waitUntil: 'networkidle2', timeout: 60000 });
 
-    console.log('[SCRAPER] Waiting for leaderboard...');
-    await page.waitForTimeout(5000); // give time for dynamic content
-
-    const content = await page.content();
-    console.log('[SCRAPER] Page content length:', content.length);
+    await page.waitForSelector('tr[data-slot="table-row"]', { timeout: 10000 });
 
     const users = await page.evaluate(() => {
-      const rows = document.querySelectorAll('tr[data-slot="table-row"]');
-      const extracted = [];
-
-      rows.forEach(row => {
-        const usernameEl = row.querySelector('a[href*="twitter.com"]');
-        const handleEl = row.querySelector('span.text-gray-500');
-
-        if (usernameEl && handleEl) {
-          const username = usernameEl.innerText.trim();
-          const handle = handleEl.innerText.trim().replace(/^@/, '');
-          extracted.push({ username, handle });
-        }
-      });
-
-      return extracted.slice(0, 25);
+      const rows = Array.from(document.querySelectorAll('tr[data-slot="table-row"]'));
+      return rows.slice(0, 25).map(row => {
+        const nameEl = row.querySelector('a[href*="twitter.com/i/user/"]');
+        const handleEl = row.querySelector('span.text-sm.text-gray-500');
+        if (!nameEl || !handleEl) return null;
+        return {
+          username: nameEl.textContent.trim(),
+          handle: handleEl.textContent.trim().replace('@', '')
+        };
+      }).filter(Boolean);
     });
 
-    console.log('[SCRAPER] Extracted users:', users);
+    await browser.close();
     return users;
-  } catch (err) {
-    console.error('[SCRAPER ERROR]', err);
+  } catch (error) {
+    console.error('[SCRAPER ERROR]', error);
+    await browser.close();
     throw new Error('Could not fetch leaderboard data');
-  } finally {
-    if (browser) await browser.close();
   }
 }
-
-module.exports = scrapeTop25Users;
