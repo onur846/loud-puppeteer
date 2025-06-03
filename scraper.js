@@ -20,17 +20,20 @@ export async function scrapeTop25() {
 
     const users = await page.evaluate(() => {
       const rows = Array.from(document.querySelectorAll('tr[data-slot="table-row"]'));
+
       return rows.map(row => {
         const username = row.querySelector('a[href*="twitter.com"]')?.textContent.trim();
         const handle = row.querySelector('span.text-sm.text-gray-500')?.textContent.trim().replace('@', '');
         const avatar = row.querySelector('img')?.src || '';
 
         const cells = row.querySelectorAll('td');
-        const mindshare = cells[4]?.textContent.trim() || ''; // 5th column
-        const change = cells[5]?.querySelector('span')?.textContent.trim() || ''; // 6th column
-        const earningsSol = cells[3]?.querySelector('div.text-[#01FF99]')?.textContent.trim() || '';
-        const earningsUsd = cells[3]?.querySelector('div.text-gray-400')?.textContent.trim() || '';
+
+        const earningsSol = cells[3]?.querySelector('div')?.textContent.trim() || '';
+        const earningsUsd = cells[3]?.querySelectorAll('div')?.[1]?.textContent.trim() || '';
         const earnings = `${earningsSol} ${earningsUsd}`.trim();
+
+        const mindshare = cells[4]?.querySelector('div')?.textContent.trim() || '';
+        const change = cells[5]?.querySelector('span')?.textContent.trim() || '';
 
         return { handle, username, avatar, mindshare, change, earnings };
       }).filter(u => u.handle && u.username);
