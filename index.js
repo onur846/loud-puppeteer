@@ -6,30 +6,30 @@ const PORT = process.env.PORT || 3000;
 
 let cachedData = null;
 let lastFetched = 0;
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
-app.get('/top25', async (req, res) => {
-  const now = Date.now();
-
-  if (cachedData && (now - lastFetched < CACHE_DURATION)) {
-    console.log('[CACHE] Serving cached leaderboard');
+app.get('/top25', (req, res) => {
+  if (cachedData) {
     return res.json(cachedData);
+  } else {
+    return res.status(503).json({ error: 'Data not yet available' });
   }
+});
 
+app.get('/refresh', async (req, res) => {
   try {
-    console.log('[SCRAPER] Fetching fresh leaderboard...');
+    console.log('[REFRESH] Scraping fresh data...');
     const freshData = await scrapeTop25();
     cachedData = freshData;
-    lastFetched = now;
-    res.json(freshData);
-  } catch (error) {
-    console.error('[SCRAPER ERROR]', error);
-    res.status(500).json({ error: 'Failed to fetch data' });
+    lastFetched = Date.now();
+    res.json({ message: 'Data refreshed', updatedAt: lastFetched });
+  } catch (err) {
+    console.error('[REFRESH ERROR]', err);
+    res.status(500).json({ error: 'Refresh failed' });
   }
 });
 
 app.get('/', (req, res) => {
-  res.send('🟢 Loud Puppeteer is running.');
+  res.send('🟢 Loud Puppeteer running.');
 });
 
 app.listen(PORT, () => {
