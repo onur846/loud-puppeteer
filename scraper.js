@@ -16,7 +16,7 @@ export default async function scrapeTop25() {
     console.log('[SCRAPER] Navigating to StayLoud.io...');
     await page.goto('https://www.stayloud.io', {
       waitUntil: 'networkidle2',
-      timeout: 60000,
+      timeout: 90000,
     });
 
     await page.waitForSelector('tr[data-slot="table-row"]', { timeout: 90000 });
